@@ -98,15 +98,15 @@ set :shared_files, ['config/master.key']
 
 # Mina-style environments
 environment 'staging' do
-	set :deploy_to, '/var/www/myapp-staging'
-	set :rails_env, 'staging'
-	set :branch, 'develop'
+  set :deploy_to, '/var/www/myapp-staging'
+  set :rails_env, 'staging'
+  set :branch, 'develop'
 end
 
 environment 'production' do
-	set :deploy_to, '/var/www/myapp'
-	set :rails_env, 'production'
-	set :branch, 'main'
+  set :deploy_to, '/var/www/myapp'
+  set :rails_env, 'production'
+  set :branch, 'main'
 end
 ```
 
