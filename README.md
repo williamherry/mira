@@ -44,6 +44,13 @@ Use `--verbose` with any command when you want full command/script logs during e
 ./bin/mira deploy
 ```
 
+Or with a specific environment (Mina-style):
+
+```bash
+./bin/mira staging deploy
+./bin/mira production deploy
+```
+
 5. Rollback if needed:
 
 ```bash
@@ -88,6 +95,26 @@ set :shared_files, ['config/master.key']
 
 # Optional override: custom app restart command (systemd/supervisor etc.)
 # set :restart_command, 'sudo systemctl restart myapp'
+
+# Mina-style environments
+environment 'staging' do
+	set :deploy_to, '/var/www/myapp-staging'
+	set :rails_env, 'staging'
+	set :branch, 'develop'
+end
+
+environment 'production' do
+	set :deploy_to, '/var/www/myapp'
+	set :rails_env, 'production'
+	set :branch, 'main'
+end
+```
+
+Then deploy with:
+
+```bash
+./bin/mira staging deploy
+./bin/mira production deploy
 ```
 
 ## Notes

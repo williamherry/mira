@@ -13,13 +13,13 @@ module Mira
 
     def initialize(argv)
       @argv = argv.dup
-      @options = { verbose: false }
+      @options = { verbose: false, environment: nil }
     end
 
     def start
       started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       parse_options!
-      command = @argv.shift
+      command = resolve_command!
       return print_help if command.nil? || command == 'help'
 
       unless COMMANDS.include?(command)
@@ -92,7 +92,16 @@ module Mira
       path = File.expand_path('Mirafile', Dir.pwd)
       raise 'Mirafile not found in current directory, run `mira init` first' unless File.exist?(path)
 
-      Config.load(path)
+      Config.load(path, selected_environment: @options[:environment])
+    end
+
+    def resolve_command!
+      token = @argv.shift
+      return nil if token.nil?
+      return token if COMMANDS.include?(token)
+
+      @options[:environment] = token
+      @argv.shift
     end
 
     def deployer
@@ -107,6 +116,9 @@ module Mira
           mira [--verbose] init
           mira [--verbose] setup
           mira [--verbose] deploy
+          mira [--verbose] [environment] setup
+          mira [--verbose] [environment] deploy
+          mira [--verbose] [environment] rollback
           mira [--verbose] rollback
           mira [--verbose] puma:start
           mira [--verbose] puma:stop
@@ -116,6 +128,8 @@ module Mira
 
         Notes:
           - Run commands from the app directory where Mirafile exists.
+          - Optional environment follows Mina style: `mira staging deploy`.
+          - Define environments in Mirafile with `environment 'name' do ... end`.
           - setup prepares shared and releases directories on remote host.
           - deploy uploads code from local git branch, runs Rails tasks, then restarts Puma.
       HELP

@@ -37,17 +37,22 @@ module Mira
       def set(key, value)
         @config.set(key, value)
       end
+
+      def environment(name, &block)
+        @config.register_environment(name, block)
+      end
     end
 
-    def self.load(path)
+    def self.load(path, selected_environment: nil)
       config = new
       DSLContext.new(config).instance_eval(File.read(path), path)
-      config.finalize!
+      config.finalize!(selected_environment: selected_environment)
       config
     end
 
     def initialize
       @values = {}
+      @environments = {}
       DEFAULTS.each { |k, v| @values[k] = duplicate(v) }
     end
 
@@ -59,7 +64,15 @@ module Mira
       @values.fetch(key.to_sym)
     end
 
-    def finalize!
+    def register_environment(name, block)
+      raise ArgumentError, 'environment requires a block' unless block
+
+      @environments[name.to_s] = block
+    end
+
+    def finalize!(selected_environment: nil)
+      apply_environment!(selected_environment) if selected_environment
+
       required = %i[host user deploy_to]
       missing = required.select { |key| blank?(fetch(key)) }
       return if missing.empty?
@@ -75,6 +88,19 @@ module Mira
 
     def blank?(value)
       value.nil? || (value.respond_to?(:empty?) && value.empty?)
+    end
+
+    def apply_environment!(selected_environment)
+      env_name = selected_environment.to_s
+      block = @environments[env_name]
+      return DSLContext.new(self).instance_exec(&block) if block
+
+      available = @environments.keys.sort
+      if available.empty?
+        raise ArgumentError, "Environment '#{env_name}' is not defined"
+      end
+
+      raise ArgumentError, "Environment '#{env_name}' is not defined (available: #{available.join(', ')})"
     end
   end
 end
